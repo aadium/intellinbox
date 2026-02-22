@@ -52,6 +52,7 @@ Clean stop
 ```
 docker compose down
 ```
+or just press `CTRL+C` in the terminal where `docker compose up` is running to stop the containers gracefully.
 
 Container status
 ```
