@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: intellinbox_db
+    restart: always
+    env_file: .env
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: intellinbox_redis
+    restart: always
+
+  api:
+    build: ./backend
+    container_name: intellinbox_api
+    restart: always
+    ports:
+      - "8000:8000"
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  worker:
+    build: ./worker
+    container_name: intellinbox_worker
+    restart: always
+    env_file: .env
+    volumes:
+      - ./models:/home/appuser/.cache/huggingface
+    depends_on:
+      - redis
+      - db
