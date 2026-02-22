@@ -35,6 +35,10 @@ services:
         condition: service_started
 
   worker:
+    deploy:
+      resources:
+        limits:
+          memory: 6G
     build:
       context: .
       dockerfile: worker/Dockerfile
