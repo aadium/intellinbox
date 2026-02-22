@@ -29,41 +29,6 @@
 * **Purpose:** A web UI to manage Docker containers. It’s optional but highly recommended for monitoring and debugging.
 * **Ports:** Maps `9443:9443` for access.
 
-Build command
-```
-docker compose up --build
-```
-
-Smart start (only rebuild changed containers)
-* This will only rebuild containers that have changes in their Dockerfile or context. If you haven't made any changes to the worker's code or Dockerfile, it will skip rebuilding that container, saving you time.
-* If you want to force a rebuild of all containers, use the `--build` flag as shown above.
-```
-docker compose up -d
-```
-
-Fresh start
-```
-docker compose down -v && docker compose up --build
-```
-
-Clean stop
-* This will stop and remove containers, networks, and volumes created by `up`. The `-v` flag ensures that the Postgres data volume is also removed, giving you a completely fresh start next time.
-* If you want to keep the data, simply omit the `-v` flag:
-```
-docker compose down
-```
-or just press `CTRL+C` in the terminal where `docker compose up` is running to stop the containers gracefully.
-
-Container status
-```
-docker ps
-```
-
-Stop containers
-```
-sudo systemctl stop <container_name>
-```
-
 ## `/backend`
 ### `Dockerfile`
 * **Dependency Layering:** We copy only the requirements.txt first and install it. This is a Docker "best practice" it means if you change your code but not your libraries, Docker will skip the long installation step during the next build.
