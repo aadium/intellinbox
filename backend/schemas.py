@@ -17,7 +17,6 @@ class AnalysisRead(AnalysisBase):
 
 class EmailBase(BaseModel):
     sender: str
-    receiver: str
     subject: str
     body: str
 

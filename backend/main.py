@@ -39,7 +39,6 @@ def read_single_email(email_id: int, db: Session = Depends(get_db)):
 def create_email(email: schemas.EmailCreate, db: Session = Depends(get_db)):
     db_email = models.Email(
         sender=email.sender,
-        receiver=email.receiver,
         subject=email.subject,
         body=email.body
     )
