@@ -25,6 +25,7 @@ app.add_middleware(
 @app.get("/emails/", response_model=List[schemas.EmailRead])
 def read_emails(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     emails = db.query(models.Email).offset(skip).limit(limit).all()
+    emails.sort(key=lambda e: e.received_at, reverse=True)
     return emails
 
 @app.get("/emails/{email_id}", response_model=schemas.EmailRead)
