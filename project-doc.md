@@ -31,7 +31,7 @@
 
 ## `/backend`
 ### `Dockerfile`
-* **Dependency Layering:** We copy only the requirements.txt first and install it. This is a Docker "best practice" it means if you change your code but not your libraries, Docker will skip the long installation step during the next build.
+* **Dependency Layering:** We copy only the requirements.txt first and install it. Docker will skip the long installation step during the next build if the dependencies haven't changed, which speeds up development.
 * **Environment Variables:** We set PYTHONUNBUFFERED=1 so logs appear in the Linux terminal in real-time.
 * **The User:** It is better not to run the app as "root" for security.
 
@@ -42,15 +42,13 @@
 * Define the Base class here so models.py can import it.
 * `get_db` manages the lifecycle of a database connection so we don't leak memory or leave connections open.
 
-### `models.py`
-#### The Schema Strategy
-Here are the specific tips for drafting your models using SQLAlchemy 2.0 style:
+### `schema.py`
 1. **The Relationship:**
 One email will have one analysis. This is a **One-to-One** relationship.
 2. **Handling the Status:**
 The `status` column on the Email table is the "heartbeat" of the pipeline.
 
-#### Key Columns to Include
+#### Key Columns
 ##### **Table 1: `Email` (The Source)**
 * **`id`**: Integer, Primary Key.
 * **`sender`**: String.
@@ -66,5 +64,18 @@ The `status` column on the Email table is the "heartbeat" of the pipeline.
 * **`summary`**: Text (The T5 output).
 * **`category`**: String (e.g., "Work", "Personal", "Spam").
 
+### `models.py`
+* This is where we define the SQLAlchemy models that correspond to our database tables.
+* Each class (Email and Analysis) inherits from `Base` and defines the columns as class attributes.
+* The `relationship` function is used to link the two tables together, allowing us to easily access the analysis from an email and vice versa.
+
+### `main.py`
+* This is the entry point for our FastAPI application.
+* We define a single POST endpoint `/process_email` that accepts an email payload.
+* When a request comes in, we create a new `Email` record with the status "Pending".
+* After committing to the database, we push the `email_id` to Redis so the worker can pick it up for processing.
+* Finally, we return a JSON response with the `email_id` and a message confirming receipt.
+* We also have 2 GET endpoints, and one PUT endpoint to check the status of an email and retrieve its analysis once completed.
+
 ## `/worker/Dockerfile`
-The worker's job is different from the API. It doesn't wait for HTTP requests; it sits in a loop, watching Redis for new `email_id` tasks.
+The worker sits in a loop, watching Redis for new `email_id` tasks.
