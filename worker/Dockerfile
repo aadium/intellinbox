@@ -26,4 +26,4 @@ RUN adduser --disabled-password --gecos "" workeruser
 USER workeruser
 
 # The entrypoint for this container is the Celery worker command
-CMD ["celery", "-A", "tasks.celery_app", "worker", "--loglevel=info"]
+CMD ["celery", "-A", "tasks.celery_app", "worker", "--loglevel=info", "--concurrency=2"]

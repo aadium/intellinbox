@@ -23,3 +23,7 @@ export const fetchEmails = async (): Promise<Email[]> => {
   const response = await axios.get(`${API_BASE_URL}/emails/`);
   return response.data;
 };
+
+export const deleteEmail = async (id: number): Promise<void> => {
+  await axios.delete(`${API_BASE_URL}/emails/${id}`);
+};
