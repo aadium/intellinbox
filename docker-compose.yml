@@ -2,6 +2,8 @@ services:
   db:
     image: postgres:15-alpine
     container_name: intellinbox_db
+    ports:
+      - "5434:5432"
     restart: always
     env_file: .env
     volumes:
@@ -18,7 +20,9 @@ services:
     restart: always
 
   api:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: intellinbox_api
     restart: always
     ports:
@@ -31,7 +35,9 @@ services:
         condition: service_started
 
   worker:
-    build: ./worker
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
     container_name: intellinbox_worker
     restart: always
     env_file: .env
@@ -40,3 +46,16 @@ services:
     depends_on:
       - redis
       - db
+  
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: always
+    ports:
+      - "9443:9443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+
+volumes:
+  portainer_data:

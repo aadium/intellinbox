@@ -1,0 +1,56 @@
+from datetime import datetime
+import enum
+from typing import Optional
+from sqlalchemy import String, Text, Float, DateTime, ForeignKey, Enum as sqlalchemy_Enum, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from database import Base
+
+class EmailStatus(str, enum.Enum):
+    PENDING = "pending"
+    PROCESSING = "processing"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+class Email(Base):
+    __tablename__ = "emails"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    sender: Mapped[str] = mapped_column(String(255))
+    receiver: Mapped[str] = mapped_column(String(255))
+    subject: Mapped[str] = mapped_column(String(255))
+    body: Mapped[str] = mapped_column(Text)
+
+    status: Mapped[EmailStatus] = mapped_column(
+        sqlalchemy_Enum(EmailStatus), 
+        default=EmailStatus.PENDING,
+        nullable=False
+    )
+    
+    received_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    # Relationship to the Analysis (One-to-One)
+    analysis: Mapped["Analysis"] = relationship(
+        back_populates="email", cascade="all, delete-orphan", uselist=False
+    )
+
+
+class Analysis(Base):
+    __tablename__ = "analyses"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    email_id: Mapped[int] = mapped_column(ForeignKey("emails.id"))
+    
+    # ML Outputs
+    priority_score: Mapped[float] = mapped_column(Float, nullable=True)
+    summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    category: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    
+    processed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), onupdate=func.now(), server_default=func.now()
+    )
+
+    # Link back to the parent email
+    email: Mapped["Email"] = relationship(back_populates="analysis")

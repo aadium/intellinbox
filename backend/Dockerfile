@@ -16,15 +16,13 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY ../requirements.txt .
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 6. Copy the rest of the backend code
-COPY . .
+COPY backend/ . 
 
-# 7. Create a non-root user and switch to it
+# Create a non-root user and switch to it
 RUN adduser --disabled-password --gecos "" appuser && chown -R appuser /app
 USER appuser
 
-# 8. Command to run the API
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

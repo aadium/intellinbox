@@ -13,15 +13,15 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements from root and install Python dependencies
-COPY ../requirements.txt .
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy worker and shared logic
-COPY . .
+COPY worker/ .
 
 # Create a non-root user
 RUN adduser --disabled-password --gecos "" workeruser
 USER workeruser
 
 # The entrypoint for this container is the Celery worker command
-CMD ["celery", "-A", "tasks", "worker", "--loglevel=info"]
+CMD ["celery", "-A", "tasks.celery_app", "worker", "--loglevel=info"]
