@@ -22,6 +22,9 @@ def analyze_email(email_id: int):
     print("--- Loading BERT and T5 models ---")
     classifier = pipeline("text-classification", model="distilbert-base-uncased-finetuned-sst-2-english")
     summarizer = pipeline("summarization", model="t5-small")
+    zero_shot = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+
+    labels = ["critical urgency", "moderate priority", "low priority/backlog"]
 
     try:
         email = db.query(Email).filter(Email.id == email_id).first()
@@ -33,15 +36,24 @@ def analyze_email(email_id: int):
         # BERT logic
         class_result = classifier(email.body[:512])
         category = class_result[0]['label']
-        
+
         # T5 logic
         summary_text = summarizer(email.body, max_length=45)[0]['summary_text']
+
+        # BART logic
+        result = zero_shot(email.body, candidate_labels=labels)
+        if result['labels'][0] == "critical urgency":
+            priority_score = result['scores'][0]
+        elif result['labels'][0] == "moderate priority":
+            priority_score = result['scores'][0] * 0.6
+        else:
+            priority_score = result['scores'][0] * 0.2
 
         new_analysis = Analysis(
             email_id=email.id,
             category=category,
             summary=summary_text,
-            priority_score=0.85
+            priority_score=round(priority_score, 2)
         )
         db.add(new_analysis)
         

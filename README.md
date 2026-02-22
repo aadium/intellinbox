@@ -26,15 +26,21 @@ The system is split into four main services to ensure scalability:
 ## Project Structure
 ```
 intellinbox/
+├── .venv/              # Python virtual environment (ignored in git)
 ├── backend/            # FastAPI code
 │   ├── main.py
+│   ├── database.py
+│   ├── schema.py
+│   ├── models.py
 │   └── Dockerfile
 ├── worker/             # Celery + ML models
-│   ├── worker.py
+│   ├── tasks.py
 │   └── Dockerfile
-├── data/               # Persistent Postgres data (ignored in git)
-├── models/             # Local storage for BERT/T5 weights
+├── postgres_data/      # Persistent Postgres data
+├── models/             # Local storage for BERT/T5/BART weights
 ├── docker-compose.yml
+├── .dockerignore
+├── .env
 └── requirements.txt
 ```
 

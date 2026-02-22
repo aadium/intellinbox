@@ -2,6 +2,7 @@ import os
 
 from celery import Celery
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -13,6 +14,13 @@ models.Base.metadata.create_all(bind=engine)
 celery_app = Celery("tasks", broker=os.getenv("REDIS_URL", "redis://redis:6379/0"))
 
 app = FastAPI(title="IntellInbox API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/emails/", response_model=List[schemas.EmailRead])
 def read_emails(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
