@@ -22,7 +22,11 @@ class EmailBase(BaseModel):
     body: str
 
 class EmailCreate(EmailBase):
-    pass 
+    pass
+
+class EmailDelete(EmailBase):
+    id: int
+    deleted: bool = True
 
 class EmailRead(EmailBase):
     id: int

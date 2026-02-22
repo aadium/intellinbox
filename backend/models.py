@@ -31,7 +31,6 @@ class Email(Base):
         DateTime(timezone=True), server_default=func.now()
     )
 
-    # Relationship to the Analysis (One-to-One)
     analysis: Mapped["Analysis"] = relationship(
         back_populates="email", cascade="all, delete-orphan", uselist=False
     )
@@ -52,5 +51,4 @@ class Analysis(Base):
         DateTime(timezone=True), onupdate=func.now(), server_default=func.now()
     )
 
-    # Link back to the parent email
     email: Mapped["Email"] = relationship(back_populates="analysis")
