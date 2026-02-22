@@ -27,6 +27,7 @@ The system is split into four main services to ensure scalability:
 ```
 intellinbox/
 ├── .venv/              # Python virtual environment (ignored in git)
+├── frontend/           # Vue.js code for the UI 
 ├── backend/            # FastAPI code
 │   ├── main.py
 │   ├── database.py
