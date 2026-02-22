@@ -70,12 +70,17 @@ The `status` column on the Email table is the "heartbeat" of the pipeline.
 * The `relationship` function is used to link the two tables together, allowing us to easily access the analysis from an email and vice versa.
 
 ### `main.py`
-* This is the entry point for our FastAPI application.
-* We define a single POST endpoint `/process_email` that accepts an email payload.
-* When a request comes in, we create a new `Email` record with the status "Pending".
-* After committing to the database, we push the `email_id` to Redis so the worker can pick it up for processing.
-* Finally, we return a JSON response with the `email_id` and a message confirming receipt.
-* We also have 2 GET endpoints, and one PUT endpoint to check the status of an email and retrieve its analysis once completed.
+* The API has one main **POST** endpoint to receive emails and two **GET** endpoints to check the status and retrieve the analysis.
+* When an email is received, we create a new record in the `Email` table with the status "Pending" and then push the `email_id` to Redis for the worker to process.
+* The **GET** endpoints allow clients to check the status of an email and retrieve the analysis once it's completed.
+* The **PUT** endpoint allows clients to update the status of an email, which can be useful for error handling or manual overrides.
+* The **DELETE** endpoint allows clients to remove an email and its analysis from the database, which can be useful for cleanup or testing purposes.
 
-## `/worker/Dockerfile`
+## `/worker`
+### `Dockerfile`
 The worker sits in a loop, watching Redis for new `email_id` tasks.
+
+### `worker.py`
+* The worker uses Celery to manage background tasks. It connects to Redis as the broker and PostgreSQL as the backend for storing results.
+* When a new `email_id` is received from Redis, the worker retrieves the corresponding email from the database, processes it with BERT and T5, and then updates the database with the results.
+* The worker also updates the email's status to "Processing" when it starts and "Completed" or "Failed" when it finishes, allowing the API to provide real-time status updates to clients.
