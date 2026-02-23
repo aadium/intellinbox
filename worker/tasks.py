@@ -148,7 +148,7 @@ def setup_inbox_task(inbox_id: int):
 
         # Fetch recent emails
         import datetime
-        date = (datetime.date.today() - datetime.timedelta(days=7)).strftime("%d-%b-%Y")
+        date = (datetime.date.today() - datetime.timedelta(days=30)).strftime("%d-%b-%Y")
         new_emails = fetch_unseen_emails(inbox, f'SINCE "{date}" NOT FROM "noreply@"')
         
         added_count = 0
