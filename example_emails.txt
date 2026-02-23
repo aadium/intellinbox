@@ -1,0 +1,30 @@
+The "Urgent/Critical" (To test Priority Scoring)
+{
+  "sender": "aadi1@gmail.com",
+  "receiver": "aadi2@gmail.com",
+  "subject": "IMMEDIATE ACTION: System Vulnerability and Crash Risks",
+  "body": "We have identified several critical bottlenecks in the current deployment that are causing intermittent system failures. Without immediate automated testing and load balancing checks, we risk a total service blackout. Recent logs indicate that the app is crashing under minimal stress, which is damaging our brand reputation among enterprise clients. We need to deploy a full regression suite immediately to identify the root cause of these memory leaks and prevent further system degradation. This is a high-priority matter that requires the engineering team's full attention."
+}
+The "Minor bug fix" (To test Priority Scoring)
+{
+  "sender": "aadi1@gmail.com",
+  "receiver": "aadi2@gmail.com",
+  "subject": "FUTURE TASK: Minor UI/UX bug fixes",
+  "body": "We have identified some minor bugs in our system. These are trivial ones that only affect the user experience slightly, such as a misaligned icon in the footer and a typo on the about page. There is no immediate rush on these as they are non-critical and do not affect system stability. We can place these in the backlog for a future sprint when the team has some downtime. Just wanted to keep these on our radar for eventual cleanup."
+}
+
+The "Business/Marketing" (To test BERT Categorization)
+{
+  "sender": "aadi1@gmail.com",
+  "receiver": "aadi2@gmail.com",
+  "subject": "Enhancing Brand Loyalty through Product Stability",
+  "body": "In today's competitive market, the stability of your mobile application is a key differentiator for brand reputation. Users expect flawless performance, and even a single crash can lead to an immediate uninstallation. By investing in a comprehensive testing framework, we aren't just fixing bugs; we are investing in customer retention and long-term system health. Quality software is the best marketing tool we have. We should highlight our commitment to 99.9% uptime and zero-crash sessions in our next quarterly newsletter to reassure our stakeholders."
+}
+
+The "Technical Report" (To test Data Extraction)
+{
+  "sender": "aadi1@gmail.com",
+  "receiver": "aadi2@gmail.com",
+  "subject": "Summary of QA Metrics and System Resiliency",
+  "body": "The latest QA report indicates that our test coverage has reached 85%, significantly reducing the likelihood of production-level system damage. We observed that by catching 40 high-severity bugs in the development environment, we saved approximately 200 hours of emergency hotfixing. Our reputation for stability remains intact, as recent user feedback confirms that the app is no longer crashing during the checkout process. Moving forward, we will integrate automated UI testing to further safeguard the system against regressions in the legacy code."
+}

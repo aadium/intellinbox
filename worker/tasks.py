@@ -3,7 +3,8 @@ from celery import Celery
 from celery.signals import worker_process_init
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Analysis, Email, EmailStatus
+from models import Analysis, Email, EmailStatus, MonitoredInbox
+from fetcher import fetch_unseen_emails
 from transformers import pipeline
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")
@@ -32,7 +33,7 @@ def init_worker(**kwargs):
     # BART for Zero-Shot Classification (Priority)
     zero_shot = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
 
-@celery_app.task(name="tasks.analyze")
+@celery_app.task(name="tasks.analyze_email")
 def analyze_email(email_id: int):
     global classifier, summarizer, zero_shot
     db = SessionLocal()
@@ -101,5 +102,45 @@ def analyze_email(email_id: int):
             email.status = EmailStatus.FAILED
             db.commit()
         return f"Error: {str(e)}"
+    finally:
+        db.close()
+
+@celery_app.task(name="tasks.sync_inbox")
+def sync_inbox_task(inbox_id: int):
+    db = SessionLocal()
+    try:
+        # Get the inbox config
+        inbox = db.query(MonitoredInbox).filter(MonitoredInbox.id == inbox_id).first()
+        if not inbox or not inbox.is_active:
+            return f"Inbox {inbox_id} not found or inactive."
+
+        # Fetch recent 300 emails
+        new_emails = fetch_unseen_emails(inbox, limit=300)
+        
+        added_count = 0
+        for item in new_emails:
+            # Deduplicate using Message-ID
+            exists = db.query(Email).filter(
+                Email.message_id == item['message_id']
+            ).first()
+
+            if not exists:
+                db_email = Email(
+                    sender=item['sender'],
+                    subject=item['subject'],
+                    body=item['body'],
+                    message_id=item['message_id'],
+                    inbox_id=inbox.id,
+                    status=EmailStatus.PENDING
+                )
+                db.add(db_email)
+                db.commit()
+                db.refresh(db_email)
+
+                celery_app.send_task("tasks.analyze_email", args=[db_email.id])
+                added_count += 1
+        
+        return f"Successfully synced {inbox.email_address}. Added {added_count} new emails."
+    
     finally:
         db.close()
