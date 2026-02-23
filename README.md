@@ -9,7 +9,7 @@ This project addresses "information fatigue" by automatically processing incomin
 ### Key Features
 
 * **Asynchronous Processing:** Uses a task queue to ensure the API remains responsive while models run.
-* **NLP Insights:** * **Priority Scoring:** Classifies emails by urgency.
+* **Priority Scoring:** Classifies emails by urgency.
 * **Auto-Summarization:** Generates concise summaries of long threads.
 * **Entity Tagging:** Extracts actionable metadata (dates, names, topics).
 * **Full Containerization:** The entire stack is orchestrated via Docker Compose for easy deployment.
