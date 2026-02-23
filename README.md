@@ -69,7 +69,7 @@ intellinbox/
 
 1. **Clone the repo:**
 ```bash
-git clone https://github.com/your-username/intellinbox.git
+git clone https://github.com/aadium/intellinbox.git
 cd intellinbox
 
 ```
@@ -80,3 +80,5 @@ docker-compose up --build
 ```
 3. **Test the API:**
 Access the interactive docs at `http://localhost:8000/docs`.
+4. **Access the frontend:**
+Access the frontend at `http://localhost:5173`.
