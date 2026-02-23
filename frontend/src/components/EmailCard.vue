@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { TrashIcon } from '@heroicons/vue/24/outline';
-import { deleteEmail, type Email } from '../services/api'
+import { ArrowPathIcon, TrashIcon } from '@heroicons/vue/24/outline';
+import { deleteEmail, rerunAnalysis, type Email } from '../services/api'
 
 const props = defineProps<{
   email: Email
@@ -32,6 +32,15 @@ const handleDelete = async () => {
   }
 }
 
+const handleRerun = async () => {
+  try {
+    await rerunAnalysis(props.email.id);
+    alert("Analysis restarted!");
+  } catch (err) {
+    console.error("Failed to rerun analysis", err);
+  }
+}
+
 const getPriorityClass = (score: number) => {
   if (score > 0.8) return 'bg-red-900 text-red-100 border-red-700'
   if (score > 0.4) return 'bg-yellow-900 text-yellow-100 border-yellow-700'
@@ -49,7 +58,7 @@ const getStatusClass = (status: string) => {
 </script>
 
 <template>
-  <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-slate-600 transition-all shadow-xl">
+  <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-slate-600 transition-all shadow-xl w-full min-w-0 overflow-hidden">
     
     <div class="flex justify-between items-start mb-4">
       <div>
@@ -61,6 +70,14 @@ const getStatusClass = (status: string) => {
       </div>
       
       <div class="flex items-center gap-3">
+        <button 
+          @click.stop="handleRerun" 
+          class="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-full transition-all"
+          title="Rerun Analysis"
+        >
+          <ArrowPathIcon class="h-5 w-5" />
+        </button>
+
         <button 
           @click.stop="handleDelete" 
           class="relative z-10 p-2 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-full transition-all cursor-pointer"
@@ -92,6 +109,7 @@ const getStatusClass = (status: string) => {
     <div class="flex items-center gap-4 text-xs text-slate-500">
       <span :class="[
         'px-2 py-1 rounded font-bold uppercase tracking-tighter', 
+        email.status === 'FAILED' ? 'bg-red-900 text-red-200' : 
         email.analysis?.category === 'positive' ? 'bg-green-900 text-green-200' : 
         email.analysis?.category === 'negative' ? 'bg-red-900 text-red-200' : 
         email.analysis?.category === 'neutral' ? 'bg-blue-800 text-blue-200' : 
@@ -101,10 +119,6 @@ const getStatusClass = (status: string) => {
       </span>
       
       <span v-if="email.analysis">Processed: {{ formatDate(email.analysis?.processed_at || '') }}</span>
-      <span class="ml-auto flex items-center gap-2">
-        <span class="h-2 w-2 rounded-full" :class="email.status === 'completed' ? 'bg-green-500' : 'bg-yellow-500'"></span>
-        <span :class="getStatusClass(email.status)">{{ email.status }}</span>
-      </span>
     </div>
   </div>
 </template>

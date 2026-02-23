@@ -15,9 +15,21 @@ class AnalysisRead(AnalysisBase):
 
     model_config = ConfigDict(from_attributes=True)
 
+class InboxBase(BaseModel):
+    email_address: str
+    imap_server: str = "imap.gmail.com"
+    is_active: bool = True
+
+class InboxCreate(InboxBase):
+    password: str
+
+class InboxRead(InboxBase):
+    id: int
+    last_synced: datetime
+    model_config = ConfigDict(from_attributes=True)
+
 class EmailBase(BaseModel):
     sender: str
-    receiver: str
     subject: str
     body: str
 
@@ -30,8 +42,10 @@ class EmailDelete(EmailBase):
 
 class EmailRead(EmailBase):
     id: int
+    inbox_id: int
     status: EmailStatus
     received_at: datetime
     analysis: Optional[AnalysisRead] = None
+    inbox: Optional[InboxRead] = None
 
     model_config = ConfigDict(from_attributes=True)

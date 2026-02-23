@@ -1,9 +1,11 @@
+import datetime
 import os
 from celery import Celery
 from celery.signals import worker_process_init
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
-from models import Analysis, Email, EmailStatus
+from models import Analysis, Email, EmailStatus, MonitoredInbox
+from fetcher import fetch_unseen_emails
 from transformers import pipeline
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")
@@ -32,74 +34,149 @@ def init_worker(**kwargs):
     # BART for Zero-Shot Classification (Priority)
     zero_shot = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
 
-@celery_app.task(name="tasks.analyze")
+@celery_app.task(name="tasks.analyze_email")
 def analyze_email(email_id: int):
     global classifier, summarizer, zero_shot
     db = SessionLocal()
-
-    if None in [classifier, summarizer, zero_shot]:
-        init_worker()
+    email = None # Initialize for the finally block
 
     try:
         email = db.query(Email).filter(Email.id == email_id).first()
-        if not email: return "Email not found"
+        if not email: 
+            return "Email not found"
 
         email.status = EmailStatus.PROCESSING
         db.commit()
 
+        if not email.body or not email.body.strip():
+            raise ValueError("Email body is empty; cannot analyze.")
+
         content = email.body[:1024]
 
-        # Sentiment (RoBERTa)
-        # Returns: 'positive', 'neutral', or 'negative'
         sent_result = classifier(content[:512])[0]
         category = sent_result['label'].lower()
 
-        # B. Summary (T5)
-        summary_text = summarizer(
+        summary_results = summarizer(
             content, 
             max_length=90, 
             min_length=30, 
-            do_sample=False,
-            early_stopping=True
-        )[0]['summary_text']
-        
-        summary_text = summary_text.strip().capitalize()
-        if not summary_text.endswith('.'):
-            summary_text += '...'
+            do_sample=False
+        )
+        summary_text = summary_results[0]['summary_text'].strip().capitalize()
+        if not summary_text.endswith('.'): summary_text += '...'
 
-        # C. Priority (BART Zero-Shot)
-        # Generic categories: Urgent, Neutral, Social
         labels = ["urgent action required", "neutral informational", "low priority social"]
         bart_result = zero_shot(content, candidate_labels=labels)
+
         top_label = bart_result['labels'][0]
         base_score = bart_result['scores'][0]
+        priority_score = base_score * (1.0 if "urgent" in top_label else 0.5 if "neutral" in top_label else 0.2)
 
-        # Generic Mapping Logic
-        if "urgent" in top_label:
-            priority_score = base_score
-        elif "neutral" in top_label:
-            priority_score = base_score * 0.5
-        else:
-            priority_score = base_score * 0.2
-
-        # Final DB Save
         new_analysis = Analysis(
             email_id=email.id,
             category=category,
-            summary=summary_text.strip(),
+            summary=summary_text,
             priority_score=round(priority_score, 2)
         )
         db.add(new_analysis)
-        
+
         email.status = EmailStatus.COMPLETED
         db.commit()
-        return f"Done: {category} | {top_label}"
+        return f"Success: {category}"
 
     except Exception as e:
+        print(f"TASK ERROR for Email {email_id}: {str(e)}")
         db.rollback()
+
         if email:
-            email.status = EmailStatus.FAILED
+            db.query(Email).filter(Email.id == email_id).update({"status": EmailStatus.FAILED})
             db.commit()
-        return f"Error: {str(e)}"
+        return f"Failed: {str(e)}"
+    finally:
+        db.close()
+
+@celery_app.task(name="tasks.sync_inbox")
+def sync_inbox_task(inbox_id: int):
+    db = SessionLocal()
+    try:
+        # Get the inbox config
+        inbox = db.query(MonitoredInbox).filter(MonitoredInbox.id == inbox_id).first()
+        if not inbox or not inbox.is_active:
+            return f"Inbox {inbox_id} not found or inactive."
+
+        # Fetch recent emails
+        new_emails = fetch_unseen_emails(inbox, '(UNSEEN NOT FROM "noreply@")')
+        
+        added_count = 0
+        for item in new_emails:
+            # Deduplicate using Message-ID
+            exists = db.query(Email).filter(
+                Email.message_id == item['message_id']
+            ).first()
+
+            if not exists:
+                db_email = Email(
+                    sender=item['sender'],
+                    subject=item['subject'],
+                    body=item['body'],
+                    message_id=item['message_id'],
+                    inbox_id=inbox.id,
+                    status=EmailStatus.PENDING
+                )
+                db.add(db_email)
+                db.commit()
+                db.refresh(db_email)
+
+                celery_app.send_task("tasks.analyze_email", args=[db_email.id])
+                added_count += 1
+        
+        inbox.last_synced = func.now()
+        db.commit()
+        return f"Successfully synced {inbox.email_address}. Added {added_count} new emails."
+    
+    finally:
+        db.close()
+
+@celery_app.task(name="tasks.setup_inbox")
+def setup_inbox_task(inbox_id: int):
+    db = SessionLocal()
+    try:
+        # Get the inbox config
+        inbox = db.query(MonitoredInbox).filter(MonitoredInbox.id == inbox_id).first()
+        if not inbox or not inbox.is_active:
+            return f"Inbox {inbox_id} not found or inactive."
+
+        # Fetch recent emails
+        import datetime
+        date = (datetime.date.today() - datetime.timedelta(days=7)).strftime("%d-%b-%Y")
+        new_emails = fetch_unseen_emails(inbox, f'SINCE "{date}" NOT FROM "noreply@"')
+        
+        added_count = 0
+        for item in new_emails:
+            # Deduplicate using Message-ID
+            exists = db.query(Email).filter(
+                Email.message_id == item['message_id']
+            ).first()
+
+            if not exists:
+                db_email = Email(
+                    sender=item['sender'],
+                    subject=item['subject'],
+                    body=item['body'],
+                    message_id=item['message_id'],
+                    inbox_id=inbox.id,
+                    status=EmailStatus.PENDING
+                )
+                db.add(db_email)
+                db.commit()
+                db.refresh(db_email)
+
+                celery_app.send_task("tasks.analyze_email", args=[db_email.id])
+                added_count += 1
+        
+        inbox.last_synced = func.now()
+        db.commit()
+        return f"Successfully synced {inbox.email_address}. Added {added_count} new emails."
+    
     finally:
         db.close()
