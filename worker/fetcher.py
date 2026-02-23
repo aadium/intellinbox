@@ -1,19 +1,35 @@
 from email.header import decode_header
 import imaplib
 import email
+
+from bs4 import BeautifulSoup
 from security import decrypt_password
 
 def is_promotional(msg, body):
+    sender = msg.get("From", "").lower()
+
+    important_keywords = ["security", "alert", "verification", "invoice", "receipt", "order"]
+    if "noreply" in sender and any(word in body.lower() for word in important_keywords):
+        return False
+
     if msg.get("List-Unsubscribe"):
         return True
-    
-    promo_keywords = ["unsubscribe", "view in browser", "privacy policy", "click here", "special offer"]
-    body_lower = body.lower()
-    if any(word in body_lower for word in promo_keywords):
-        if len(body_lower) < 2000 and "opt out" in body_lower:
-            return True
+
+    promo_keywords = ["view in browser", "special offer", "discount", "opt out"]
+    if any(word in body.lower()[:500] for word in promo_keywords):
+        return True
             
     return False
+
+def get_clean_text(html_body):
+    if not html_body:
+        return ""
+    soup = BeautifulSoup(html_body, "html.parser")
+    
+    for script_or_style in soup(["script", "style"]):
+        script_or_style.decompose()
+
+    return " ".join(soup.get_text(separator=" ").split())
 
 def fetch_unseen_emails(inbox_model, condition, limit=25):
     raw_password = decrypt_password(inbox_model.password)
@@ -67,7 +83,7 @@ def fetch_unseen_emails(inbox_model, condition, limit=25):
                     email_list.append({
                         "sender": msg.get("From"),
                         "subject": subject,
-                        "body": body.strip(),
+                        "body": body,
                         "message_id": message_id
                     })
 

@@ -5,8 +5,9 @@ from celery.signals import worker_process_init
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
 from models import Analysis, Email, EmailStatus, MonitoredInbox
-from fetcher import fetch_unseen_emails
+from fetcher import fetch_unseen_emails, get_clean_text
 from transformers import pipeline
+from bs4 import BeautifulSoup
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -50,8 +51,9 @@ def analyze_email(email_id: int):
 
         if not email.body or not email.body.strip():
             raise ValueError("Email body is empty; cannot analyze.")
-
-        content = email.body[:1024]
+        
+        clean_content = get_clean_text(email.body)
+        content = clean_content[:1024]
 
         sent_result = classifier(content[:512])[0]
         category = sent_result['label'].lower()

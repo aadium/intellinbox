@@ -1,10 +1,16 @@
 <script setup lang="ts">
 import { ArrowPathIcon, TrashIcon } from '@heroicons/vue/24/outline';
 import { deleteEmail, rerunAnalysis, type Email } from '../services/api'
+import DOMPurify from 'dompurify'
+import { computed } from 'vue'
 
 const props = defineProps<{
   email: Email
 }>()
+
+const sanitizedBody = computed(() => {
+  return DOMPurify.sanitize(props.email.body)
+})
 
 const emit = defineEmits<{
   (e: 'emailDeleted', id: number): void
@@ -102,7 +108,9 @@ const getStatusClass = (status: string) => {
     <div v-if="email.body" class="bg-slate-800/30 rounded-lg p-4 mb-4 border border-slate-700/50">
       <p class="text-sm text-slate-400 line-clamp-3 hover:line-clamp-none transition-all cursor-pointer">
         <span class="font-bold text-slate-500 uppercase text-[10px] block mb-1">Full body:</span>
-        {{ email.body }}
+          <div class="email-body prose prose-invert max-w-none">
+            <div v-html="sanitizedBody"></div>
+          </div>
       </p>
     </div>
 
