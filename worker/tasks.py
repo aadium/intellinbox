@@ -25,13 +25,12 @@ def truncate_thread(text: str) -> str:
     Strips out historical thread content (replies) so the AI focuses 
     only on the most recent exchange (the top of the email).
     """
-    # Markers indicating the start of previous emails in a thread
     markers = [
         r"^From:", 
         r"^--- Original Message ---", 
         r"^________________________________", 
-        r"^On\s.*\swrote:", # Matches "On [Date], [Name] wrote:"
-        r"^Sent from my "    # Common mobile signatures often precede threads
+        r"^On\s.*\swrote:",
+        r"^Sent from my "
     ]
     
     lines = text.splitlines()
@@ -118,8 +117,6 @@ def analyze_email(email_id: int):
         db.close()
 
 def process_inbox_fetch(db, inbox, condition):
-    """Shared logic for fetching and deduplicating emails."""
-    # Note: Search widened to allow noreply system alerts while is_promotional in fetcher filters trash
     new_emails = fetch_unseen_emails(inbox, condition)
     added_count = 0
     
