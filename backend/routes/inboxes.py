@@ -36,6 +36,7 @@ def create_inbox(inbox: schemas.InboxCreate, db: Session = Depends(get_db)):
     db.add(db_inbox)
     db.commit()
     db.refresh(db_inbox)
+    celery_app.send_task("tasks.setup_inbox", args=[db_inbox.id])
     return db_inbox
 
 @router.post("/{inbox_id}/sync")

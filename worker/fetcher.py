@@ -1,9 +1,21 @@
 from email.header import decode_header
 import imaplib
 import email
-from backend.security import decrypt_password
+from security import decrypt_password
 
-def fetch_unseen_emails(inbox_model, limit=300):
+def is_promotional(msg, body):
+    if msg.get("List-Unsubscribe"):
+        return True
+    
+    promo_keywords = ["unsubscribe", "view in browser", "privacy policy", "click here", "special offer"]
+    body_lower = body.lower()
+    if any(word in body_lower for word in promo_keywords):
+        if len(body_lower) < 2000 and "opt out" in body_lower:
+            return True
+            
+    return False
+
+def fetch_unseen_emails(inbox_model, condition, limit=25):
     raw_password = decrypt_password(inbox_model.password)
     mail = imaplib.IMAP4_SSL(inbox_model.imap_server)
     
@@ -11,7 +23,7 @@ def fetch_unseen_emails(inbox_model, limit=300):
         mail.login(inbox_model.email_address, raw_password)
         mail.select("inbox")
 
-        status, messages = mail.search(None, 'UNSEEN')
+        status, messages = mail.search(None, condition)
         if status != 'OK' or not messages[0]:
             return []
 
@@ -40,20 +52,24 @@ def fetch_unseen_emails(inbox_model, limit=300):
             if msg.is_multipart():
                 for part in msg.walk():
                     if part.get_content_type() == "text/plain":
-                        try:
-                            body = part.get_payload(decode=True).decode(errors='replace')
-                        except:
-                            body = "[Could not decode body]"
+                        payload = part.get_payload(decode=True)
+                        if payload:
+                            body = payload.decode(errors='replace')
                         break
             else:
-                body = msg.get_payload(decode=True).decode(errors='replace')
+                payload = msg.get_payload(decode=True)
+                if payload:
+                    body = payload.decode(errors='replace')
 
-            email_list.append({
-                "sender": msg.get("From"),
-                "subject": subject,
-                "body": body,
-                "message_id": message_id
-            })
+            # Only append if body has actual text content
+            if body and body.strip():
+                if not is_promotional(msg, body):
+                    email_list.append({
+                        "sender": msg.get("From"),
+                        "subject": subject,
+                        "body": body.strip(),
+                        "message_id": message_id
+                    })
 
         return email_list
 

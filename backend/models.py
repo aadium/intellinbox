@@ -65,6 +65,9 @@ class MonitoredInbox(Base):
     imap_server: Mapped[str] = mapped_column(String(255), default="imap.gmail.com")
     password: Mapped[str] = mapped_column(String(255))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    last_synced: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), onupdate=func.now(), server_default=func.now()
+    )
 
     emails: Mapped[List["Email"]] = relationship(
         back_populates="inbox", cascade="all, delete-orphan"

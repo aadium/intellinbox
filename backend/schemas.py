@@ -25,6 +25,7 @@ class InboxCreate(InboxBase):
 
 class InboxRead(InboxBase):
     id: int
+    last_synced: datetime
     model_config = ConfigDict(from_attributes=True)
 
 class EmailBase(BaseModel):
@@ -41,6 +42,7 @@ class EmailDelete(EmailBase):
 
 class EmailRead(EmailBase):
     id: int
+    inbox_id: int
     status: EmailStatus
     received_at: datetime
     analysis: Optional[AnalysisRead] = None
