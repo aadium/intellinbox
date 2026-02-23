@@ -29,13 +29,18 @@ intellinbox/
 ├── .venv/              # Python virtual environment (ignored in git)
 ├── frontend/           # Vue.js code for the UI 
 ├── backend/            # FastAPI code
+│   ├── routes/         # API route handlers
+│   │   ├── emails.py
+│   │   └── inboxes.py
 │   ├── main.py
 │   ├── database.py
 │   ├── schema.py
+│   ├── security.py
 │   ├── models.py
 │   └── Dockerfile
 ├── worker/             # Celery + ML models
 │   ├── tasks.py
+│   ├── fetcher.py
 │   └── Dockerfile
 ├── postgres_data/      # Persistent Postgres data
 ├── models/             # Local storage for BERT/T5/BART weights
