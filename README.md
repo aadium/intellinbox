@@ -53,34 +53,39 @@ intellinbox/
 
 ```mermaid
 graph TD
-    %% User Interaction
-    User((User)) -->|HTTPS| FE[frontend/ Vue.js]
+    %% Root
+    User((User))
     
-    %% API Layer
-    FE -->|REST API| BE[backend/ FastAPI]
+    %% Branch 1: Frontend
+    User --> FE[Vue.js Frontend]
     
-    %% Database & Persistence
-    BE -->|SQLAlchemy| DB_MODELS[(db/ models.py)]
-    DB_MODELS --- PSQL[(PostgreSQL Data)]
+    %% Branch 2: API
+    FE --> BE[FastAPI Backend]
     
-    %% Task Queue Logic
-    BE -->|Push Tasks| Redis{Redis Broker}
+    %% Branch 3: Orchestration & Storage
+    BE --> DB[(PostgreSQL)]
+    BE --> Redis{{Redis Broker}}
     
-    %% Worker & ML Logic
-    Redis -->|Consume| W[worker/ Celery]
-    W -->|Fetch Emails| Fetch[fetcher.py]
-    W -->|Load Weights| ML_MODELS[models/ BERT/T5/BART]
+    %% Branch 4: Async Processing
+    Beat[Celery Beat] --> Redis
+    Redis --> Worker[Celery Worker]
     
-    %% Result Storage
-    W -->|Update Status| PSQL
+    %% Branch 5: Worker Resources
+    Worker --> DB
+    Worker --> ML[[ML Models]]
 
-    %% Styling
-    style FE fill:#42b883,stroke:#333,color:#fff
-    style BE fill:#05998b,stroke:#333,color:#fff
-    style W fill:#f9b233,stroke:#333,color:#000
-    style PSQL fill:#336791,stroke:#333,color:#fff
-    style Redis fill:#d82c20,stroke:#333,color:#fff
-    style ML_MODELS fill:#607d8b,stroke:#333,color:#fff
+    %% Styling (Clean & Modern)
+    style User fill:#fff,stroke:#333,stroke-width:2px
+    style FE fill:#42b883,stroke:#2c3e50,color:#fff
+    style BE fill:#05998b,stroke:#035e55,color:#fff
+    style DB fill:#336791,stroke:#204a6e,color:#fff
+    style Redis fill:#d82c20,stroke:#a52219,color:#fff
+    style Worker fill:#f9b233,stroke:#b37e24,color:#000
+    style Beat fill:#8b5cf6,stroke:#6d28d9,color:#fff
+    style ML fill:#475569,stroke:#1e293b,color:#fff
+    
+    %% Link Styling
+    linkStyle default stroke:#64748b,stroke-width:2px,fill:none
 ```
 
 ## Tech Stack
