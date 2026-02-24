@@ -22,33 +22,65 @@ The system is split into four main services to ensure scalability:
 2. **PostgreSQL (The Brain):** Stores raw emails and links them to their AI-generated analysis.
 3. **Redis (The Broker):** Manages the communication between the API and the background workers.
 4. **Celery Worker (The ML Engine):** Loads the **BERT** (Classification) and **T5** (Summarization) models to process the data.
-
+  
 ## Project Structure
 ```
 intellinbox/
-├── .venv/              # Python virtual environment (ignored in git)
-├── frontend/           # Vue.js code for the UI 
-├── db/                 # Database setup and models
+├── .venv/
+├── frontend/
+├── db/
 │   ├── database.py
 │   ├── models.py
 │   └── security.py
-├── backend/            # FastAPI code
-│   ├── routes/         # API route handlers
+├── backend/
+│   ├── routes/
 │   │   ├── emails.py
 │   │   └── inboxes.py
 │   ├── main.py
 │   ├── schemas.py
 │   └── Dockerfile
-├── worker/             # Celery + ML models
+├── worker/
 │   ├── tasks.py
 │   ├── fetcher.py
 │   └── Dockerfile
-├── postgres_data/      # Persistent Postgres data
-├── models/             # Local storage for BERT/T5/BART weights
+├── postgres_data/
+├── models/
 ├── docker-compose.yml
 ├── .dockerignore
 ├── .env
 └── requirements.txt
+```
+
+```mermaid
+graph TD
+    %% User Interaction
+    User((User)) -->|HTTPS| FE[frontend/ Vue.js]
+    
+    %% API Layer
+    FE -->|REST API| BE[backend/ FastAPI]
+    
+    %% Database & Persistence
+    BE -->|SQLAlchemy| DB_MODELS[(db/ models.py)]
+    DB_MODELS --- PSQL[(PostgreSQL Data)]
+    
+    %% Task Queue Logic
+    BE -->|Push Tasks| Redis{Redis Broker}
+    
+    %% Worker & ML Logic
+    Redis -->|Consume| W[worker/ Celery]
+    W -->|Fetch Emails| Fetch[fetcher.py]
+    W -->|Load Weights| ML_MODELS[models/ BERT/T5/BART]
+    
+    %% Result Storage
+    W -->|Update Status| PSQL
+
+    %% Styling
+    style FE fill:#42b883,stroke:#333,color:#fff
+    style BE fill:#05998b,stroke:#333,color:#fff
+    style W fill:#f9b233,stroke:#333,color:#000
+    style PSQL fill:#336791,stroke:#333,color:#fff
+    style Redis fill:#d82c20,stroke:#333,color:#fff
+    style ML_MODELS fill:#607d8b,stroke:#333,color:#fff
 ```
 
 ## Tech Stack
