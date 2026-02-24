@@ -25,7 +25,7 @@ const filteredEmails = computed(() => {
   // Debugging: Open your browser console (F12) to see this output
   console.log('Active Tab:', activeTab.value, 'Type:', typeof activeTab.value);
   if (emails.value.length > 0) {
-    console.log('Example Email Inbox ID:', emails.value[0].inbox_id, 'Type:', typeof emails.value[0].inbox_id);
+    console.log('Example Email Inbox ID:', emails.value[0]?.inbox_id, 'Type:', typeof emails.value[0]?.inbox_id);
   }
 
   if (activeTab.value === 'all') return emails.value;
@@ -34,17 +34,15 @@ const filteredEmails = computed(() => {
   return emails.value.filter(e => Number(e.inbox_id) === Number(activeTab.value));
 })
 
-const handleDeletedLocal = (deletedId: number) => {
-  emails.value = emails.value.filter(email => email.id !== deletedId)
-}
-
 let pollTimer: number | null = null
 
 // The Polling Logic
 const startPolling = () => {
   pollTimer = setInterval(() => {
     const needsUpdate = emails.value.some(e => e.status !== 'completed' && e.status !== 'failed')
-    loadData(true)
+    if (needsUpdate) {
+      loadData(true)
+    }
   }, 5000)
 }
 

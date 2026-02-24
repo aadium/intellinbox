@@ -14,8 +14,12 @@ router = APIRouter(
 )
 
 @router.get("/", response_model=List[schemas.EmailRead])
-def read_emails(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    emails = db.query(models.Email).order_by(models.Email.received_at.desc()).offset(skip).limit(limit).all()
+def read_emails(skip: int = 0, limit: int = 100, active: bool = True, db: Session = Depends(get_db)):
+    query = db.query(models.Email)
+    if active:
+        query = query.join(models.MonitoredInbox).filter(models.MonitoredInbox.is_active == True)
+    query = query.order_by(models.Email.received_at.desc())
+    emails = query.offset(skip).limit(limit).all()
     return emails
 
 @router.get("/{email_id}", response_model=schemas.EmailRead)

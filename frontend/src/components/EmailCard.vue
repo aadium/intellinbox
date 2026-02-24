@@ -52,15 +52,6 @@ const getPriorityClass = (score: number) => {
   if (score > 0.4) return 'bg-yellow-900 text-yellow-100 border-yellow-700'
   return 'bg-green-900 text-green-100 border-green-700'
 }
-
-const getStatusClass = (status: string) => {
-  switch (status.toLowerCase()) {
-    case 'completed': return 'text-green-400 font-medium'
-    case 'processing': return 'text-yellow-400 animate-pulse'
-    case 'failed': return 'text-red-400'
-    default: return 'text-slate-500'
-  }
-}
 </script>
 
 <template>

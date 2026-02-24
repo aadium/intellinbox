@@ -20,7 +20,7 @@ def read_inboxes(db: Session = Depends(get_db)):
     return db.query(models.MonitoredInbox).all()
 
 @router.post("/", response_model=schemas.InboxRead)
-def create_inbox(inbox: schemas.InboxCreate, db: Session = Depends(get_db)):
+def create_inbox(inbox: schemas.InboxCreate, db: Session = Depends(get_db), sync_days: int = 30):
     existing = db.query(models.MonitoredInbox).filter(
         models.MonitoredInbox.email_address == inbox.email_address
     ).first()
@@ -36,8 +36,23 @@ def create_inbox(inbox: schemas.InboxCreate, db: Session = Depends(get_db)):
     db.add(db_inbox)
     db.commit()
     db.refresh(db_inbox)
-    celery_app.send_task("tasks.setup_inbox", args=[db_inbox.id])
+    celery_app.send_task("tasks.setup_inbox", args=[db_inbox.id, sync_days])
     return db_inbox
+
+@router.post("/{inbox_id}/reset")
+def flush_inbox(inbox_id: int, db: Session = Depends(get_db), sync_days: int = 30):
+    inbox = db.query(models.MonitoredInbox).filter(models.MonitoredInbox.id == inbox_id).first()
+    if not inbox:
+        raise HTTPException(status_code=404, detail="Inbox not found")
+    db.query(models.Analysis).filter(
+        models.Analysis.email_id.in_(
+            db.query(models.Email.id).filter(models.Email.inbox_id == inbox_id)
+        )
+    ).delete(synchronize_session=False)
+    db.query(models.Email).filter(models.Email.inbox_id == inbox_id).delete()
+    db.commit()
+    celery_app.send_task("tasks.setup_inbox", args=[inbox_id, sync_days])
+    return {"message": "Reset task started in background"}
 
 @router.post("/{inbox_id}/sync")
 def trigger_sync(inbox_id: int, db: Session = Depends(get_db)):

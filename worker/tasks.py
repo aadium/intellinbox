@@ -3,6 +3,7 @@ import os
 import re
 from celery import Celery
 from celery.signals import worker_process_init
+from celery.schedules import crontab
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
 from models import Analysis, Email, EmailStatus, MonitoredInbox
@@ -43,6 +44,14 @@ def truncate_thread(text: str) -> str:
         clean_lines.append(line)
         
     return "\n".join(clean_lines).strip()
+
+# Define the periodic schedule
+celery_app.conf.beat_schedule = {
+    'sync-all-inboxes-every-minute': {
+        'task': 'tasks.sync_all_active_inboxes',
+        'schedule': 60.0,
+    },
+}
 
 @worker_process_init.connect
 def init_worker(**kwargs):
@@ -155,14 +164,33 @@ def sync_inbox_task(inbox_id: int):
         db.close()
 
 @celery_app.task(name="tasks.setup_inbox")
-def setup_inbox_task(inbox_id: int):
+def setup_inbox_task(inbox_id: int, days: int):
     db = SessionLocal()
     try:
         inbox = db.query(MonitoredInbox).filter(MonitoredInbox.id == inbox_id).first()
         if not inbox or not inbox.is_active: return f"Inbox {inbox_id} inactive."
 
-        date = (datetime.date.today() - datetime.timedelta(days=30)).strftime("%d-%b-%Y")
+        date = (datetime.date.today() - datetime.timedelta(days=days)).strftime("%d-%b-%Y")
         count = process_inbox_fetch(db, inbox, f'SINCE "{date}"')
         return f"Setup {inbox.email_address}. Added {count} historical emails."
+    finally:
+        db.close()
+
+@celery_app.task(name="tasks.sync_all_active_inboxes")
+def sync_all_active_inboxes():
+    """
+    Discovery task that finds all active inboxes and 
+    dispatches individual sync tasks for them.
+    """
+    db = SessionLocal()
+    try:
+        active_inboxes = db.query(MonitoredInbox).filter(
+            MonitoredInbox.is_active == True
+        ).all()
+        
+        for inbox in active_inboxes:
+            celery_app.send_task("tasks.sync_inbox", args=[inbox.id])
+            
+        return f"Dispatched sync for {len(active_inboxes)} inboxes."
     finally:
         db.close()

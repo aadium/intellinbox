@@ -18,9 +18,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy worker and shared logic
 COPY worker/ .
-COPY backend/database.py .
-COPY backend/models.py .
-COPY backend/security.py .
+COPY db/ .
 
 # Create a non-root user
 RUN adduser --disabled-password --gecos "" workeruser

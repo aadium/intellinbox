@@ -48,6 +48,14 @@ export const updateInboxStatus = async (id: number, isActive: boolean): Promise<
   return response.data;
 };
 
+export const syncInbox = async (id: number): Promise<void> => {
+  await axios.post(`${API_BASE_URL}/inboxes/${id}/sync`);
+};
+
+export const resetInbox = async (id: number, sync_days: number): Promise<void> => {
+  await axios.post(`${API_BASE_URL}/inboxes/${id}/reset?sync_days=${sync_days}`);
+}
+
 export const triggerSyncAll = async (): Promise<void> => {
   await axios.post(`${API_BASE_URL}/inboxes/syncall`);
 };
