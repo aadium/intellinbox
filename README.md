@@ -28,15 +28,16 @@ The system is split into four main services to ensure scalability:
 intellinbox/
 ├── .venv/              # Python virtual environment (ignored in git)
 ├── frontend/           # Vue.js code for the UI 
+├── db/                 # Database setup and models
+│   ├── database.py
+│   ├── models.py
+│   └── security.py
 ├── backend/            # FastAPI code
 │   ├── routes/         # API route handlers
 │   │   ├── emails.py
 │   │   └── inboxes.py
 │   ├── main.py
-│   ├── database.py
-│   ├── schema.py
-│   ├── security.py
-│   ├── models.py
+│   ├── schemas.py
 │   └── Dockerfile
 ├── worker/             # Celery + ML models
 │   ├── tasks.py
