@@ -23,7 +23,12 @@ The system is split into four main services to ensure scalability:
 3. **Redis (The Broker):** Manages the communication between the API and the background workers.
 4. **Celery Worker (The ML Engine):** Loads the **BERT** (Classification) and **T5** (Summarization) models to process the data.
   
-## Project Structure
+## Project Structure & Architecture
+
+<table>
+<tr valign="middle">
+<td align="left" width="50%">
+
 ```
 intellinbox/
 ├── .venv/
@@ -51,42 +56,14 @@ intellinbox/
 └── requirements.txt
 ```
 
-```mermaid
-graph TD
-    %% Root
-    User((User))
-    
-    %% Branch 1: Frontend
-    User --> FE[Vue.js Frontend]
-    
-    %% Branch 2: API
-    FE --> BE[FastAPI Backend]
-    
-    %% Branch 3: Orchestration & Storage
-    BE --> DB[(PostgreSQL)]
-    BE --> Redis{{Redis Broker}}
-    
-    %% Branch 4: Async Processing
-    Beat[Celery Beat] --> Redis
-    Redis --> Worker[Celery Worker]
-    
-    %% Branch 5: Worker Resources
-    Worker --> DB
-    Worker --> ML[[ML Models]]
+</td>
+<td align="center">
 
-    %% Styling (Clean & Modern)
-    style User fill:#fff,stroke:#333,stroke-width:2px
-    style FE fill:#42b883,stroke:#2c3e50,color:#fff
-    style BE fill:#05998b,stroke:#035e55,color:#fff
-    style DB fill:#336791,stroke:#204a6e,color:#fff
-    style Redis fill:#d82c20,stroke:#a52219,color:#fff
-    style Worker fill:#f9b233,stroke:#b37e24,color:#000
-    style Beat fill:#8b5cf6,stroke:#6d28d9,color:#fff
-    style ML fill:#475569,stroke:#1e293b,color:#fff
-    
-    %% Link Styling
-    linkStyle default stroke:#64748b,stroke-width:2px,fill:none
-```
+<img src="arch.svg" alt="System Architecture Diagram" width="100%">
+
+</td>
+</tr>
+</table>
 
 ## Tech Stack
 
