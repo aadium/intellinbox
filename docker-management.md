@@ -36,6 +36,10 @@ Replace `worker` with `backend`, `db`, or `redis` as needed.
 ```bash
 docker compose down -v
 ```
+if you want to refresh only the db data, you can remove the volume separately:
+```bash
+docker volume rm intellinbox_data
+```
 If you want to keep the data, simply omit the `-v` flag:
 ```bash
 docker compose down

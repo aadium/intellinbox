@@ -1,4 +1,5 @@
 from email.header import decode_header
+from email.utils import parsedate_to_datetime
 import imaplib
 import email
 
@@ -31,7 +32,7 @@ def get_clean_text(html_body):
 
     return " ".join(soup.get_text(separator=" ").split())
 
-def fetch_unseen_emails(inbox_model, condition, limit=25):
+def fetch_unseen_emails(inbox_model, condition):
     raw_password = decrypt_password(inbox_model.password)
     mail = imaplib.IMAP4_SSL(inbox_model.imap_server)
     
@@ -44,7 +45,7 @@ def fetch_unseen_emails(inbox_model, condition, limit=25):
             return []
 
         all_ids = messages[0].split()
-        recent_ids = all_ids[-limit:]
+        recent_ids = all_ids
         
         email_list = []
         for num in recent_ids:
@@ -82,6 +83,7 @@ def fetch_unseen_emails(inbox_model, condition, limit=25):
                 if not is_promotional(msg, body):
                     email_list.append({
                         "sender": msg.get("From"),
+                        "received_at": parsedate_to_datetime(msg.get("Date")),
                         "subject": subject,
                         "body": body,
                         "message_id": message_id

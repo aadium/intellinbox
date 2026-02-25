@@ -46,7 +46,7 @@ const syncAll = async () => {
 <template>
     <div class="w-82 border-r border-slate-800 flex flex-col h-full bg-slate-950">
         <div class="p-6 border-b border-slate-800 flex justify-between items-center">
-            <h2 class="text-xl font-bold text-white">Accounts</h2>
+            <h2 class="text-xl font-bold text-white">Inboxes</h2>
             <button @click="syncAll" class="text-slate-400 hover:text-blue-400" title="Sync All">
                 <ArrowPathIcon class="h-5 w-5" />
             </button>
@@ -106,12 +106,10 @@ const syncAll = async () => {
                         class="w-full bg-slate-800 border-slate-700 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500" />
                     <select v-model="newInbox.sync_days"
                         class="w-full bg-slate-800 border-slate-700 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="1">Sync last 1 day</option>
-                        <option value="7">Sync last 1 week</option>
-                        <option value="30">Sync last 1 month</option>
-                        <option value="90">Sync last 3 months</option>
-                        <option value="180">Sync last 6 months</option>
-                        <option value="365">Sync last 1 year</option>
+                        <option :value=1>Sync last 1 day</option>
+                        <option :value=7>Sync last 1 week</option>
+                        <option :value=30>Sync last 1 month</option>
+                        <option :value=90>Sync last 3 months</option>
                     </select>
                 </div>
                 <div class="flex gap-4 mt-8">
@@ -148,12 +146,10 @@ const syncAll = async () => {
                         Lookback</label>
                     <select v-model="resetSyncDays"
                         class="w-full bg-slate-800 border-slate-700 text-white rounded-lg p-3 outline-none focus:ring-2 focus:ring-red-500 transition-all cursor-pointer">
-                        <option :value="1">Sync last 1 day</option>
-                        <option :value="7">Sync last 1 week</option>
-                        <option :value="30">Sync last 1 month</option>
-                        <option :value="90">Sync last 3 months</option>
-                        <option :value="180">Sync last 6 months</option>
-                        <option :value="365">Sync last 1 year</option>
+                        <option :value=1>Sync last 1 day</option>
+                        <option :value=7>Sync last 1 week</option>
+                        <option :value=30>Sync last 1 month</option>
+                        <option :value=90>Sync last 3 months</option>
                     </select>
                 </div>
 

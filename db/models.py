@@ -22,6 +22,7 @@ class Email(Base):
     
     sender: Mapped[str] = mapped_column(String(255))
     subject: Mapped[str] = mapped_column(String(255))
+    received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     body: Mapped[str] = mapped_column(Text)
     message_id: Mapped[Optional[str]] = mapped_column(String(255), unique=True, index=True)
 
@@ -30,8 +31,8 @@ class Email(Base):
         default=EmailStatus.PENDING,
         nullable=False
     )
-    
-    received_at: Mapped[datetime] = mapped_column(
+
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
 

@@ -9,6 +9,7 @@ from sqlalchemy.orm import sessionmaker
 from models import Analysis, Email, EmailStatus, MonitoredInbox
 from fetcher import fetch_unseen_emails, get_clean_text
 from transformers import pipeline
+from email.utils import parsedate_to_datetime
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -135,6 +136,7 @@ def process_inbox_fetch(db, inbox, condition):
         if not exists:
             db_email = Email(
                 sender=item['sender'],
+                received_at=item['received_at'],
                 subject=item['subject'],
                 body=item['body'],
                 message_id=item['message_id'],
