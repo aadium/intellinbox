@@ -51,3 +51,11 @@ To not remove containers and volumes, use:
 docker compose stop
 ```
 This will stop the containers but keep them around for a quick restart later.
+
+### Clean rebuild workflow
+- Backup: Run `./backup.sh`.
+- Bring Down: `docker-compose down -v` (The -v flag is what actually deletes the data volume).
+- Update Schema: Add the new .sql migration file to your migration folder.
+- Start Up: `docker-compose up -d`.
+- Restore: Run: `cat ./backups/backup_file.sql | docker exec -i intellinbox_db psql -U admin -d intellinbox_db`
+- Run migration: Run `cat ./migrations/filename.sql | docker exec -i intellinbox_db psql -U admin -d intellinbox_db`
